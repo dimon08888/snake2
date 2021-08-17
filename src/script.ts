@@ -3,6 +3,20 @@ const BORDER_WIDTH = 1;
 const CELL_WIDTH = 30;
 const CANVAS_WIDTH = CELLS_COUNT * CELL_WIDTH + CELLS_COUNT * BORDER_WIDTH;
 
+enum Key {
+  UP = 'w',
+  DOWN = 's',
+  LEFT = 'a',
+  RIGHT = 'd',
+}
+
+enum Direction {
+  UP,
+  DOWN,
+  LEFT,
+  RIGHT,
+}
+
 function draw(): void {
   const canvas = document.createElement('canvas');
 
@@ -15,6 +29,33 @@ function draw(): void {
     throw new Error('Canvas 2d context is null');
   }
 
+  const snake = new Snake();
+
+  document.addEventListener('keydown', (e) => {
+    switch (e.key) {
+      case Key.UP:
+        snake.clear(ctx);
+        snake.move(Direction.UP);
+        snake.draw(ctx);
+        break;
+      case Key.DOWN:
+        snake.clear(ctx);
+        snake.move(Direction.DOWN);
+        snake.draw(ctx);
+        break;
+      case Key.LEFT:
+        snake.clear(ctx);
+        snake.move(Direction.LEFT);
+        snake.draw(ctx);
+        break;
+      case Key.RIGHT:
+        snake.clear(ctx);
+        snake.move(Direction.RIGHT);
+        snake.draw(ctx);
+        break;
+    }
+  });
+
   for (let y = 0; y < CELLS_COUNT; y++) {
     for (let x = 0; x < CELLS_COUNT; x++) {
       ctx.fillRect(
@@ -26,8 +67,7 @@ function draw(): void {
     }
   }
 
-  drawSnake(ctx);
-  drawFood(ctx);
+  snake.draw(ctx);
 
   const root = document.querySelector('#root');
 
@@ -38,15 +78,54 @@ function draw(): void {
   root.append(canvas);
 }
 
-function drawSnake(ctx: CanvasRenderingContext2D): void {
-  ctx.fillStyle = 'green';
-  ctx.fillRect(0, 0, 30, 30);
+interface Position {
+  x: number;
+  y: number;
 }
 
-function drawFood(ctx: CanvasRenderingContext2D): void {
-  ctx.fillStyle = 'red';
-  ctx.fillRect(CELL_WIDTH + 1, 0, 30, 30);
-  ctx.fillRect(CELL_WIDTH * 1 + 1, 0, 30, 30);
+class Snake {
+  body: Position[];
+
+  constructor() {
+    this.body = [{ x: 0, y: 0 }];
+  }
+
+  move(direction: Direction): void {
+    const head = this.body[0];
+
+    switch (direction) {
+      case Direction.UP:
+        if (head.y >= CELL_WIDTH) {
+          head.y -= CELL_WIDTH + BORDER_WIDTH;
+        }
+        break;
+      case Direction.DOWN:
+        if (head.y <= CANVAS_WIDTH - CELL_WIDTH - CELLS_COUNT * BORDER_WIDTH) {
+          head.y += CELL_WIDTH + BORDER_WIDTH;
+        }
+        break;
+      case Direction.LEFT:
+        if (head.x >= CELL_WIDTH) {
+          head.x -= CELL_WIDTH + BORDER_WIDTH;
+        }
+        break;
+      case Direction.RIGHT:
+        if (head.x <= CANVAS_WIDTH - CELL_WIDTH - CELLS_COUNT * BORDER_WIDTH) {
+          head.x += CELL_WIDTH + BORDER_WIDTH;
+        }
+        break;
+    }
+  }
+
+  draw(ctx: CanvasRenderingContext2D): void {
+    ctx.fillStyle = 'green';
+    ctx.fillRect(this.body[0].x, this.body[0].y, CELL_WIDTH, CELL_WIDTH);
+  }
+
+  clear(ctx: CanvasRenderingContext2D): void {
+    ctx.fillStyle = 'black';
+    ctx.fillRect(this.body[0].x, this.body[0].y, CELL_WIDTH, CELL_WIDTH);
+  }
 }
 
 draw();
