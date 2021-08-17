@@ -3,13 +3,17 @@ const BORDER_WIDTH = 1;
 const CELL_WIDTH = 30;
 const CANVAS_WIDTH = CELLS_COUNT * CELL_WIDTH + CELLS_COUNT * BORDER_WIDTH;
 
-function draw() {
-  const canvas = document.creaetElement('canvas');
+function draw(): void {
+  const canvas = document.createElement('canvas');
 
-  canvas.setAttribute('width', CANVAS_WIDTH);
-  canvas.setAttribute('height', CANVAS_WIDTH);
+  canvas.setAttribute('width', String(CANVAS_WIDTH));
+  canvas.setAttribute('height', String(CANVAS_WIDTH));
 
   const ctx = canvas.getContext('2d');
+
+  if (ctx === null) {
+    throw new Error('Canvas 2d context is null');
+  }
 
   for (let y = 0; y < CELLS_COUNT; y++) {
     for (let x = 0; x < CELLS_COUNT; x++) {
@@ -26,17 +30,23 @@ function draw() {
   drawFood(ctx);
 
   const root = document.querySelector('#root');
+
+  if (root === null) {
+    throw new Error('Unable to find an element with id `root`');
+  }
+
   root.append(canvas);
 }
 
-function drawSnake(ctx) {
+function drawSnake(ctx: CanvasRenderingContext2D): void {
   ctx.fillStyle = 'green';
   ctx.fillRect(0, 0, 30, 30);
 }
 
-function drawFood(ctx) {
+function drawFood(ctx: CanvasRenderingContext2D): void {
   ctx.fillStyle = 'red';
   ctx.fillRect(CELL_WIDTH + 1, 0, 30, 30);
+  ctx.fillRect(CELL_WIDTH * 1 + 1, 0, 30, 30);
 }
 
 draw();
