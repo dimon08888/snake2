@@ -31,6 +31,7 @@ function draw(): void {
   }
 
   const snake = new Snake();
+  const food = new Food();
 
   document.addEventListener('keydown', (e) => {
     switch (e.key) {
@@ -66,6 +67,12 @@ function draw(): void {
     snake.clear(ctx);
     snake.move();
     snake.draw(ctx);
+
+    while (snake.collides(food.position)) {
+      food.spawn();
+    }
+
+    food.draw(ctx);
   }, TICK);
 
   const root = document.querySelector('#root');
@@ -83,10 +90,10 @@ function draw(): void {
   root.append(canvas);
 }
 
-interface Position {
+type Position = {
   x: number;
   y: number;
-}
+};
 
 class Snake {
   body: Position[];
@@ -140,6 +147,41 @@ class Snake {
   clear(ctx: CanvasRenderingContext2D): void {
     ctx.fillStyle = 'black';
     ctx.fillRect(this.body[0].x, this.body[0].y, CELL_WIDTH, CELL_WIDTH);
+  }
+
+  collides(position: Position): boolean {
+    for (let i = 0; i < this.body.length; i++) {
+      if (position.x === this.body[i].x && position.y === this.body[i].y) {
+        return true;
+      }
+    }
+    return false;
+  }
+}
+
+class Food {
+  // @ts-ignore
+  position: Position;
+
+  constructor() {
+    this.spawn();
+  }
+
+  spawn(): void {
+    const xCell = Math.floor(Math.random() * CELLS_COUNT);
+    const yCell = Math.floor(Math.random() * CELLS_COUNT);
+
+    const position = {
+      x: (CELL_WIDTH + BORDER_WIDTH) * xCell,
+      y: (CELL_WIDTH + BORDER_WIDTH) * yCell,
+    };
+
+    this.position = position;
+  }
+
+  draw(ctx: CanvasRenderingContext2D): void {
+    ctx.fillStyle = 'red';
+    ctx.fillRect(this.position.x, this.position.y, CELL_WIDTH, CELL_WIDTH);
   }
 }
 
