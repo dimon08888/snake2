@@ -1,7 +1,8 @@
 const CELLS_COUNT = 20;
 const BORDER_WIDTH = 1;
 const CELL_WIDTH = 30;
-const CANVAS_WIDTH = CELLS_COUNT * CELL_WIDTH + CELLS_COUNT * BORDER_WIDTH;
+const CANVAS_WIDTH = CELLS_COUNT * (CELL_WIDTH + BORDER_WIDTH);
+const TICK = 100;
 
 enum Key {
   UP = 'w',
@@ -34,45 +35,49 @@ function draw(): void {
   document.addEventListener('keydown', (e) => {
     switch (e.key) {
       case Key.UP:
-        snake.clear(ctx);
-        snake.move(Direction.UP);
-        snake.draw(ctx);
+        snake.direction = Direction.UP;
         break;
       case Key.DOWN:
-        snake.clear(ctx);
-        snake.move(Direction.DOWN);
-        snake.draw(ctx);
+        snake.direction = Direction.DOWN;
         break;
       case Key.LEFT:
-        snake.clear(ctx);
-        snake.move(Direction.LEFT);
-        snake.draw(ctx);
+        snake.direction = Direction.LEFT;
         break;
       case Key.RIGHT:
-        snake.clear(ctx);
-        snake.move(Direction.RIGHT);
-        snake.draw(ctx);
+        snake.direction = Direction.RIGHT;
         break;
     }
   });
 
   for (let y = 0; y < CELLS_COUNT; y++) {
     for (let x = 0; x < CELLS_COUNT; x++) {
+      let xBorder = x * BORDER_WIDTH;
+      let yBorder = y * BORDER_WIDTH;
       ctx.fillRect(
-        CELL_WIDTH * x + x * BORDER_WIDTH,
-        CELL_WIDTH * y + y * BORDER_WIDTH,
+        CELL_WIDTH * x + xBorder,
+        CELL_WIDTH * y + yBorder,
         CELL_WIDTH,
         CELL_WIDTH,
       );
     }
   }
 
-  snake.draw(ctx);
+  setInterval(() => {
+    snake.clear(ctx);
+    snake.move();
+    snake.draw(ctx);
+  }, TICK);
 
   const root = document.querySelector('#root');
 
   if (root === null) {
     throw new Error('Unable to find an element with id `root`');
+  }
+
+  if (root instanceof HTMLElement) {
+    root.style.background = 'peachpuff';
+    root.style.maxWidth = CANVAS_WIDTH + 'px';
+    root.style.maxHeight = CANVAS_WIDTH + 'px';
   }
 
   root.append(canvas);
@@ -85,33 +90,43 @@ interface Position {
 
 class Snake {
   body: Position[];
+  direction: Direction;
 
   constructor() {
     this.body = [{ x: 0, y: 0 }];
+    this.direction = Direction.RIGHT;
   }
 
-  move(direction: Direction): void {
+  move(): void {
     const head = this.body[0];
 
-    switch (direction) {
+    switch (this.direction) {
       case Direction.UP:
         if (head.y >= CELL_WIDTH) {
           head.y -= CELL_WIDTH + BORDER_WIDTH;
+        } else {
+          head.y = CANVAS_WIDTH - CELL_WIDTH - BORDER_WIDTH;
         }
         break;
       case Direction.DOWN:
         if (head.y <= CANVAS_WIDTH - CELL_WIDTH - CELLS_COUNT * BORDER_WIDTH) {
           head.y += CELL_WIDTH + BORDER_WIDTH;
+        } else {
+          head.y = 0;
         }
         break;
       case Direction.LEFT:
         if (head.x >= CELL_WIDTH) {
           head.x -= CELL_WIDTH + BORDER_WIDTH;
+        } else {
+          head.x = CANVAS_WIDTH - CELL_WIDTH - BORDER_WIDTH;
         }
         break;
       case Direction.RIGHT:
         if (head.x <= CANVAS_WIDTH - CELL_WIDTH - CELLS_COUNT * BORDER_WIDTH) {
           head.x += CELL_WIDTH + BORDER_WIDTH;
+        } else {
+          head.x = 0;
         }
         break;
     }
@@ -128,4 +143,8 @@ class Snake {
   }
 }
 
-draw();
+try {
+  draw();
+} catch (err) {
+  alert(err.stack);
+}
