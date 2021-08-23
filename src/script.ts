@@ -1,8 +1,8 @@
-const CELLS_COUNT = 20;
-const BORDER_WIDTH = 1;
-const CELL_WIDTH = 30;
-const CANVAS_WIDTH = CELLS_COUNT * (CELL_WIDTH + BORDER_WIDTH);
-const TICK = 100;
+let CELLS_COUNT = 20;
+let BORDER_WIDTH = 1;
+let CELL_WIDTH = 30;
+let CANVAS_WIDTH = CELLS_COUNT * (CELL_WIDTH + BORDER_WIDTH);
+let TICK = 150;
 
 enum Key {
   UP = 'w',
@@ -18,12 +18,24 @@ enum Direction {
   RIGHT,
 }
 
-function draw(): void {
+// i - enter insert mode.
+// Ctrl + [ - enter normal mode.
+// V - enter visual mode.
+// r<character> - replace character under cursor with <character>.
+// x - delete character under cursor.
+// <number>dd  - delete number lines
+// <number>yy - copy number of lines.
+// u - undo previous operation.
+// o - insert line after current line.
+// O - insert line before current line.
+
+//* highlight.
+//! alert.
+//? question>.
+//// code to be removed.
+
+function main(): void {
   const canvas = document.createElement('canvas');
-
-  canvas.setAttribute('width', String(CANVAS_WIDTH));
-  canvas.setAttribute('height', String(CANVAS_WIDTH));
-
   const ctx = canvas.getContext('2d');
 
   if (ctx === null) {
@@ -50,19 +62,6 @@ function draw(): void {
     }
   });
 
-  for (let y = 0; y < CELLS_COUNT; y++) {
-    for (let x = 0; x < CELLS_COUNT; x++) {
-      let xBorder = x * BORDER_WIDTH;
-      let yBorder = y * BORDER_WIDTH;
-      ctx.fillRect(
-        CELL_WIDTH * x + xBorder,
-        CELL_WIDTH * y + yBorder,
-        CELL_WIDTH,
-        CELL_WIDTH,
-      );
-    }
-  }
-
   setInterval(() => {
     snake.clear(ctx);
     snake.move();
@@ -77,17 +76,66 @@ function draw(): void {
 
   const root = document.querySelector('#root');
 
-  if (root === null) {
+  if (root === null || !(root instanceof HTMLDivElement)) {
     throw new Error('Unable to find an element with id `root`');
   }
 
-  if (root instanceof HTMLElement) {
-    root.style.background = 'peachpuff';
-    root.style.maxWidth = CANVAS_WIDTH + 'px';
-    root.style.maxHeight = CANVAS_WIDTH + 'px';
+  drawBoard(canvas, root);
+  root.append(canvas);
+
+  const sizeInput = document.querySelector('#sizeInput');
+
+  if (sizeInput === null || !(sizeInput instanceof HTMLInputElement)) {
+    throw new Error('sizeInput not found');
   }
 
-  root.append(canvas);
+  sizeInput.setAttribute('value', String(CELLS_COUNT));
+
+  sizeInput.addEventListener('change', () => {
+    const newCellsCount = Number(sizeInput.value);
+    const MIN_COUNT = 5, MAX_COUNT = 20; // prettier-ignore
+
+    if (newCellsCount < MIN_COUNT || newCellsCount > MAX_COUNT) {
+      return throwErr(
+        new Error(`Board size must be in range from ${MIN_COUNT} to ${MAX_COUNT}.`),
+      );
+    }
+
+    CELLS_COUNT = newCellsCount;
+    CANVAS_WIDTH = CELLS_COUNT * (CELL_WIDTH + BORDER_WIDTH);
+
+    food.spawn();
+    while (snake.collides(food.position)) {
+      food.spawn();
+    }
+
+    drawBoard(canvas, root);
+  });
+}
+
+function drawBoard(canvas: HTMLCanvasElement, root: HTMLDivElement) {
+  canvas.setAttribute('width', String(CANVAS_WIDTH));
+  canvas.setAttribute('height', String(CANVAS_WIDTH));
+
+  const ctx = canvas.getContext('2d');
+  if (ctx === null) throw new Error('Canvas 2d context is null');
+
+  for (let y = 0; y < CELLS_COUNT; y++) {
+    for (let x = 0; x < CELLS_COUNT; x++) {
+      let xBorder = x * BORDER_WIDTH;
+      let yBorder = y * BORDER_WIDTH;
+      ctx.fillRect(
+        CELL_WIDTH * x + xBorder,
+        CELL_WIDTH * y + yBorder,
+        CELL_WIDTH,
+        CELL_WIDTH,
+      );
+    }
+  }
+
+  root.style.background = 'peachpuff';
+  root.style.maxWidth = CANVAS_WIDTH + 'px';
+  root.style.maxHeight = CANVAS_WIDTH + 'px';
 }
 
 type Position = {
@@ -185,8 +233,14 @@ class Food {
   }
 }
 
+// Handle errors in callbacks.
+function throwErr(error: Error) {
+  alert(error.stack);
+}
+
+// Handle errors inside main.
 try {
-  draw();
+  main();
 } catch (err) {
   alert(err.stack);
 }

@@ -1,0 +1,17 @@
+header {
+  display: flex;
+  margin-bottom: 1rem;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+label {
+  cursor: pointer;
+}
+
+.form-control {
+  input {
+    padding-inline: 0.25rem;
+    margin-left: 0.25rem;
+  }
+}
