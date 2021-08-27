@@ -3,6 +3,7 @@ let BORDER_WIDTH = 1;
 let CELL_WIDTH = 30;
 let CANVAS_WIDTH = CELLS_COUNT * (CELL_WIDTH + BORDER_WIDTH);
 let TICK = 150;
+let BOARD_COLOR = '#000000';
 
 enum Key {
   UP = 'w',
@@ -21,6 +22,7 @@ enum Direction {
 // i - enter insert mode.
 // Ctrl + [ - enter normal mode.
 // V - enter visual mode.
+// : - enter command mode.
 // r<character> - replace character under cursor with <character>.
 // x - delete character under cursor.
 // <number>dd  - delete number lines
@@ -28,6 +30,8 @@ enum Direction {
 // u - undo previous operation.
 // o - insert line after current line.
 // O - insert line before current line.
+// u - undo
+// Ctrl -r - redo
 
 //* highlight.
 //! alert.
@@ -83,6 +87,8 @@ function main(): void {
   drawBoard(canvas, root);
   root.append(canvas);
 
+  // ADD EVENT LISTENERS
+
   const sizeInput = document.querySelector('#sizeInput');
 
   if (sizeInput === null || !(sizeInput instanceof HTMLInputElement)) {
@@ -111,6 +117,19 @@ function main(): void {
 
     drawBoard(canvas, root);
   });
+
+  const colorInput = document.querySelector('#boardColor');
+
+  if (colorInput === null || !(colorInput instanceof HTMLInputElement)) {
+    throw new Error('colorBoard not found');
+  }
+
+  colorInput.setAttribute('value', BOARD_COLOR);
+
+  colorInput.addEventListener('input', () => {
+    BOARD_COLOR = colorInput.value;
+    drawBoard(canvas, root);
+  });
 }
 
 function drawBoard(canvas: HTMLCanvasElement, root: HTMLDivElement) {
@@ -124,6 +143,7 @@ function drawBoard(canvas: HTMLCanvasElement, root: HTMLDivElement) {
     for (let x = 0; x < CELLS_COUNT; x++) {
       let xBorder = x * BORDER_WIDTH;
       let yBorder = y * BORDER_WIDTH;
+      ctx.fillStyle = BOARD_COLOR;
       ctx.fillRect(
         CELL_WIDTH * x + xBorder,
         CELL_WIDTH * y + yBorder,
@@ -193,7 +213,7 @@ class Snake {
   }
 
   clear(ctx: CanvasRenderingContext2D): void {
-    ctx.fillStyle = 'black';
+    ctx.fillStyle = BOARD_COLOR;
     ctx.fillRect(this.body[0].x, this.body[0].y, CELL_WIDTH, CELL_WIDTH);
   }
 

@@ -1,7 +1,6 @@
 header {
   display: flex;
   margin-bottom: 1rem;
-  align-items: center;
   gap: 1.5rem;
 }
 
@@ -10,6 +9,8 @@ label {
 }
 
 .form-control {
+  display: flex;
+  align-items: center;
   input {
     padding-inline: 0.25rem;
     margin-left: 0.25rem;
