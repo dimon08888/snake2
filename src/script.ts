@@ -1,9 +1,9 @@
-let CELLS_COUNT = 20;
+let CELLS_COUNT = 10;
 let BORDER_WIDTH = 1;
 let CELL_WIDTH = 30;
 let CANVAS_WIDTH = CELLS_COUNT * (CELL_WIDTH + BORDER_WIDTH);
 let TICK = 150;
-let BOARD_COLOR = '#000000';
+let BOARD_COLOR = localStorage.getItem('boardColor') ?? '#000';
 
 enum Key {
   UP = 'w',
@@ -19,24 +19,8 @@ enum Direction {
   RIGHT,
 }
 
-// i - enter insert mode.
-// Ctrl + [ - enter normal mode.
-// V - enter visual mode.
-// : - enter command mode.
-// r<character> - replace character under cursor with <character>.
-// x - delete character under cursor.
-// <number>dd  - delete number lines
-// <number>yy - copy number of lines.
-// u - undo previous operation.
-// o - insert line after current line.
-// O - insert line before current line.
-// u - undo
-// Ctrl -r - redo
-
-//* highlight.
-//! alert.
-//? question>.
-//// code to be removed.
+// gcc- line comment/uncomment.
+// gC - block comment/uncomment.
 
 function main(): void {
   const canvas = document.createElement('canvas');
@@ -48,6 +32,7 @@ function main(): void {
 
   const snake = new Snake();
   const food = new Food();
+  food.spawn(snake);
 
   document.addEventListener('keydown', (e) => {
     switch (e.key) {
@@ -71,8 +56,9 @@ function main(): void {
     snake.move();
     snake.draw(ctx);
 
-    while (snake.collides(food.position)) {
-      food.spawn();
+    if (snake.collides(food)) {
+      snake.grow();
+      food.spawn(snake);
     }
 
     food.draw(ctx);
@@ -110,11 +96,7 @@ function main(): void {
     CELLS_COUNT = newCellsCount;
     CANVAS_WIDTH = CELLS_COUNT * (CELL_WIDTH + BORDER_WIDTH);
 
-    food.spawn();
-    while (snake.collides(food.position)) {
-      food.spawn();
-    }
-
+    food.spawn(snake);
     drawBoard(canvas, root);
   });
 
@@ -129,6 +111,8 @@ function main(): void {
   colorInput.addEventListener('input', () => {
     BOARD_COLOR = colorInput.value;
     drawBoard(canvas, root);
+
+    localStorage.setItem('boardColor', colorInput.value);
   });
 }
 
@@ -182,6 +166,7 @@ class Snake {
         } else {
           head.y = CANVAS_WIDTH - CELL_WIDTH - BORDER_WIDTH;
         }
+        //
         break;
       case Direction.DOWN:
         if (head.y <= CANVAS_WIDTH - CELL_WIDTH - CELLS_COUNT * BORDER_WIDTH) {
@@ -209,21 +194,38 @@ class Snake {
 
   draw(ctx: CanvasRenderingContext2D): void {
     ctx.fillStyle = 'green';
-    ctx.fillRect(this.body[0].x, this.body[0].y, CELL_WIDTH, CELL_WIDTH);
+    for (let i = 0; i < this.body.length; i++) {
+      ctx.fillRect(this.body[i].x, this.body[i].y, CELL_WIDTH, CELL_WIDTH);
+    }
   }
 
   clear(ctx: CanvasRenderingContext2D): void {
     ctx.fillStyle = BOARD_COLOR;
-    ctx.fillRect(this.body[0].x, this.body[0].y, CELL_WIDTH, CELL_WIDTH);
+    for (let i = 0; i < this.body.length; i++) {
+      ctx.fillRect(this.body[i].x, this.body[i].y, CELL_WIDTH, CELL_WIDTH);
+    }
   }
 
-  collides(position: Position): boolean {
-    for (let i = 0; i < this.body.length; i++) {
-      if (position.x === this.body[i].x && position.y === this.body[i].y) {
-        return true;
-      }
+  collides(food: Food): boolean {
+    return this.body[0].x === food.position.x && this.body[0].y === food.position.y;
+  }
+
+  grow(): void {
+    const last = this.body[this.body.length - 1];
+    switch (this.direction) {
+      case Direction.UP:
+        this.body.push({ x: last.x, y: last.y + BORDER_WIDTH + CELL_WIDTH });
+        break;
+      case Direction.DOWN:
+        this.body.push({ x: last.x, y: last.y - BORDER_WIDTH - CELL_WIDTH });
+        break;
+      case Direction.LEFT:
+        this.body.push({ x: last.x + BORDER_WIDTH + CELL_WIDTH, y: last.y });
+        break;
+      case Direction.RIGHT:
+        this.body.push({ x: last.x - BORDER_WIDTH - CELL_WIDTH, y: last.y });
+        break;
     }
-    return false;
   }
 }
 
@@ -231,11 +233,11 @@ class Food {
   // @ts-ignore
   position: Position;
 
-  constructor() {
-    this.spawn();
-  }
+  // constructor() {
+  //   this.spawn();
+  // }
 
-  spawn(): void {
+  spawn(snake: Snake): void {
     const xCell = Math.floor(Math.random() * CELLS_COUNT);
     const yCell = Math.floor(Math.random() * CELLS_COUNT);
 
@@ -243,6 +245,12 @@ class Food {
       x: (CELL_WIDTH + BORDER_WIDTH) * xCell,
       y: (CELL_WIDTH + BORDER_WIDTH) * yCell,
     };
+
+    for (let i = 0; i < snake.body.length; i++) {
+      if (position.x === snake.body[i].x && position.y === snake.body[i].y) {
+        this.spawn(snake);
+      }
+    }
 
     this.position = position;
   }
@@ -262,5 +270,7 @@ function throwErr(error: Error) {
 try {
   main();
 } catch (err) {
-  alert(err.stack);
+  if (err instanceof Error) {
+    alert(err.stack);
+  }
 }
