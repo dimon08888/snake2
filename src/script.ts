@@ -51,14 +51,22 @@ function main(): void {
     }
   });
 
+  const scoreElement = document.querySelector('#score');
+
   setInterval(() => {
-    snake.clear(ctx);
+    clearBoard(ctx);
+
     snake.move();
     snake.draw(ctx);
 
     if (snake.collides(food)) {
       snake.grow();
       food.spawn(snake);
+      if (scoreElement) {
+        scoreElement.textContent = String(snake.body.length - 1);
+      }
+    } else if (snake.collidesSelf()) {
+      alert('game over');
     }
 
     food.draw(ctx);
@@ -123,6 +131,14 @@ function drawBoard(canvas: HTMLCanvasElement, root: HTMLDivElement) {
   const ctx = canvas.getContext('2d');
   if (ctx === null) throw new Error('Canvas 2d context is null');
 
+  clearBoard(ctx);
+
+  root.style.background = 'peachpuff';
+  root.style.maxWidth = CANVAS_WIDTH + 'px';
+  root.style.maxHeight = CANVAS_WIDTH + 'px';
+}
+
+function clearBoard(ctx: CanvasRenderingContext2D) {
   for (let y = 0; y < CELLS_COUNT; y++) {
     for (let x = 0; x < CELLS_COUNT; x++) {
       let xBorder = x * BORDER_WIDTH;
@@ -136,10 +152,6 @@ function drawBoard(canvas: HTMLCanvasElement, root: HTMLDivElement) {
       );
     }
   }
-
-  root.style.background = 'peachpuff';
-  root.style.maxWidth = CANVAS_WIDTH + 'px';
-  root.style.maxHeight = CANVAS_WIDTH + 'px';
 }
 
 type Position = {
@@ -156,58 +168,117 @@ class Snake {
     this.direction = Direction.RIGHT;
   }
 
+  // ------------------------------------------------------------------------------------------
+  // |
+  // |
+  // |
+  // |
+  // |
+  // |                            [*][*][*][*]
+  // |                            [*][*][*]   [*]
+  // |                               [*][*][*]
+  // |
+  // |
+  // |
+  // |
+  // |
+  // |
+  // |
+  // |
+  // |
+  // |
+  // |
+  // |
+  // |
+  // |
+
   move(): void {
-    const head = this.body[0];
+    const newHead = { ...this.body[0] };
 
     switch (this.direction) {
       case Direction.UP:
-        if (head.y >= CELL_WIDTH) {
-          head.y -= CELL_WIDTH + BORDER_WIDTH;
+        if (newHead.y >= CELL_WIDTH) {
+          newHead.y -= CELL_WIDTH + BORDER_WIDTH;
         } else {
-          head.y = CANVAS_WIDTH - CELL_WIDTH - BORDER_WIDTH;
+          newHead.y = CANVAS_WIDTH - CELL_WIDTH - BORDER_WIDTH;
         }
-        //
         break;
       case Direction.DOWN:
-        if (head.y <= CANVAS_WIDTH - CELL_WIDTH - CELLS_COUNT * BORDER_WIDTH) {
-          head.y += CELL_WIDTH + BORDER_WIDTH;
+        if (newHead.y <= CANVAS_WIDTH - CELL_WIDTH - CELLS_COUNT * BORDER_WIDTH) {
+          newHead.y += CELL_WIDTH + BORDER_WIDTH;
         } else {
-          head.y = 0;
+          newHead.y = 0;
         }
         break;
       case Direction.LEFT:
-        if (head.x >= CELL_WIDTH) {
-          head.x -= CELL_WIDTH + BORDER_WIDTH;
+        if (newHead.x >= CELL_WIDTH) {
+          newHead.x -= CELL_WIDTH + BORDER_WIDTH;
         } else {
-          head.x = CANVAS_WIDTH - CELL_WIDTH - BORDER_WIDTH;
+          newHead.x = CANVAS_WIDTH - CELL_WIDTH - BORDER_WIDTH;
         }
         break;
       case Direction.RIGHT:
-        if (head.x <= CANVAS_WIDTH - CELL_WIDTH - CELLS_COUNT * BORDER_WIDTH) {
-          head.x += CELL_WIDTH + BORDER_WIDTH;
+        if (newHead.x <= CANVAS_WIDTH - CELL_WIDTH - CELLS_COUNT * BORDER_WIDTH) {
+          newHead.x += CELL_WIDTH + BORDER_WIDTH;
         } else {
-          head.x = 0;
+          newHead.x = 0;
         }
         break;
     }
+
+    this.body = [newHead, ...this.body.slice(0, -1)];
   }
 
   draw(ctx: CanvasRenderingContext2D): void {
-    ctx.fillStyle = 'green';
     for (let i = 0; i < this.body.length; i++) {
+      ctx.fillStyle = 'green';
       ctx.fillRect(this.body[i].x, this.body[i].y, CELL_WIDTH, CELL_WIDTH);
+    }
+    const [leftEye, rightEye] = this.getEyesPositions();
+    drawCircle(ctx, leftEye.x, leftEye.y, CELL_WIDTH * 0.1, 3, '#fff');
+    drawCircle(ctx, rightEye.x, rightEye.y, CELL_WIDTH * 0.1, 3, '#fff');
+  }
+
+  private getEyesPositions(): [Position, Position] {
+    switch (this.direction) {
+      case Direction.UP:
+        return [
+          { x: this.body[0].x + CELL_WIDTH * 0.25, y: this.body[0].y },
+          { x: this.body[0].x + CELL_WIDTH * 0.75, y: this.body[0].y },
+        ];
+      case Direction.DOWN:
+        return [
+          { x: this.body[0].x + CELL_WIDTH * 0.25, y: this.body[0].y + CELL_WIDTH },
+          { x: this.body[0].x + CELL_WIDTH * 0.75, y: this.body[0].y + CELL_WIDTH },
+        ];
+      case Direction.LEFT:
+        return [
+          { x: this.body[0].x, y: this.body[0].y + CELL_WIDTH * 0.25 },
+          { x: this.body[0].x, y: this.body[0].y + CELL_WIDTH * 0.75 },
+        ];
+      case Direction.RIGHT:
+        return [
+          { x: this.body[0].x + CELL_WIDTH, y: this.body[0].y + CELL_WIDTH * 0.25 },
+          { x: this.body[0].x + CELL_WIDTH, y: this.body[0].y + CELL_WIDTH * 0.75 },
+        ];
     }
   }
 
-  clear(ctx: CanvasRenderingContext2D): void {
-    ctx.fillStyle = BOARD_COLOR;
-    for (let i = 0; i < this.body.length; i++) {
-      ctx.fillRect(this.body[i].x, this.body[i].y, CELL_WIDTH, CELL_WIDTH);
-    }
-  }
+  // clear(ctx: CanvasRenderingContext2D): void {
+  //   ctx.fillStyle = BOARD_COLOR;
+  //   for (let i = 0; i < this.body.length; i++) {
+  //     ctx.fillRect(this.body[i].x, this.body[i].y, CELL_WIDTH, CELL_WIDTH);
+  //   }
+  // }
 
   collides(food: Food): boolean {
     return this.body[0].x === food.position.x && this.body[0].y === food.position.y;
+  }
+
+  collidesSelf(): boolean {
+    return this.body
+      .slice(1)
+      .some((part) => part.x === this.body[0].x && part.y === this.body[0].y);
   }
 
   grow(): void {
@@ -229,6 +300,31 @@ class Snake {
   }
 }
 
+function getRandomPosition(): Position {
+  const xCell = Math.floor(Math.random() * CELLS_COUNT);
+  const yCell = Math.floor(Math.random() * CELLS_COUNT);
+  return {
+    x: (CELL_WIDTH + BORDER_WIDTH) * xCell,
+    y: (CELL_WIDTH + BORDER_WIDTH) * yCell,
+  };
+}
+
+function drawCircle(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  radius: number,
+  strokeWidth: number,
+  strokeStyle: string,
+) {
+  ctx.lineWidth = strokeWidth;
+  ctx.strokeStyle = strokeStyle;
+
+  ctx.beginPath();
+  ctx.arc(x, y, radius, 0, 2 * Math.PI, false);
+  ctx.stroke();
+}
+
 class Food {
   // @ts-ignore
   position: Position;
@@ -238,18 +334,10 @@ class Food {
   // }
 
   spawn(snake: Snake): void {
-    const xCell = Math.floor(Math.random() * CELLS_COUNT);
-    const yCell = Math.floor(Math.random() * CELLS_COUNT);
+    let position = getRandomPosition();
 
-    const position = {
-      x: (CELL_WIDTH + BORDER_WIDTH) * xCell,
-      y: (CELL_WIDTH + BORDER_WIDTH) * yCell,
-    };
-
-    for (let i = 0; i < snake.body.length; i++) {
-      if (position.x === snake.body[i].x && position.y === snake.body[i].y) {
-        this.spawn(snake);
-      }
+    while (snake.body.some((part) => part.x === position.x && part.y === position.y)) {
+      position = getRandomPosition();
     }
 
     this.position = position;
