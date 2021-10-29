@@ -22,6 +22,37 @@ enum Direction {
 // gcc- line comment/uncomment.
 // gC - block comment/uncomment.
 
+// <number>gg - go to the first line.
+// <number>G - go to the last line.
+// <percent>%
+// <C-o> - jump to previous position.
+// <C-i> - jump to next position.
+
+function debounce<A extends unknown[]>(fn: (...args: A) => void, ms: number) {
+  let timeoutId: NodeJS.Timeout;
+  return (...args: A) => {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+    timeoutId = setTimeout(() => fn(...args), ms);
+  };
+}
+
+function throttle<A extends unknown[]>(fn: (...args: A) => void, ms: number) {
+  return function (...args: A) {
+    let previousCall: number | undefined = (fn as any).lastCall;
+    (fn as any).lastCall = Date.now();
+    if (previousCall === undefined || (fn as any).lastCall - previousCall > ms) {
+      fn(...args);
+    }
+  };
+}
+
+const setDirection = debounce((snake: Snake, direction: Direction) => {
+  console.log(Direction[direction]);
+  snake.direction = direction;
+}, 50);
+
 function main(): void {
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
@@ -31,42 +62,61 @@ function main(): void {
   }
 
   const snake = new Snake();
-  const food = new Food();
+  const food = new Food('../apple.png');
   food.spawn(snake);
 
   document.addEventListener('keydown', (e) => {
     switch (e.key) {
       case Key.UP:
-        snake.direction = Direction.UP;
+        if (snake.direction !== Direction.DOWN) {
+          setDirection(snake, Direction.UP);
+        }
         break;
       case Key.DOWN:
-        snake.direction = Direction.DOWN;
+        if (snake.direction !== Direction.UP) {
+          setDirection(snake, Direction.DOWN);
+        }
         break;
       case Key.LEFT:
-        snake.direction = Direction.LEFT;
+        if (snake.direction !== Direction.RIGHT) {
+          setDirection(snake, Direction.LEFT);
+        }
         break;
       case Key.RIGHT:
-        snake.direction = Direction.RIGHT;
+        if (snake.direction !== Direction.LEFT) {
+          setDirection(snake, Direction.RIGHT);
+        }
         break;
     }
   });
 
-  const scoreElement = document.querySelector('#score');
+  const scoreElement = document.querySelector('#score') as Element;
+  let STOP = false;
 
-  setInterval(() => {
+  const intervalId = setInterval(() => {
+    if (STOP) return;
     clearBoard(ctx);
 
+    // console.log('MOVE');
     snake.move();
     snake.draw(ctx);
 
     if (snake.collides(food)) {
       snake.grow();
       food.spawn(snake);
-      if (scoreElement) {
-        scoreElement.textContent = String(snake.body.length - 1);
+      scoreElement.textContent = String(snake.body.length - 1);
+    }
+    //
+    else if (snake.collidesSelf()) {
+      if (window.confirm('Want to play again?')) {
+        snake.body.length = 1;
+        scoreElement.textContent = String(0);
+      } else {
+        // window.alert('Bye Bye');
+        // console.log('STOP');
+        STOP = true;
+        clearInterval(intervalId);
       }
-    } else if (snake.collidesSelf()) {
-      alert('game over');
     }
 
     food.draw(ctx);
@@ -139,6 +189,7 @@ function drawBoard(canvas: HTMLCanvasElement, root: HTMLDivElement) {
 }
 
 function clearBoard(ctx: CanvasRenderingContext2D) {
+  ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_WIDTH);
   for (let y = 0; y < CELLS_COUNT; y++) {
     for (let x = 0; x < CELLS_COUNT; x++) {
       let xBorder = x * BORDER_WIDTH;
@@ -328,10 +379,13 @@ function drawCircle(
 class Food {
   // @ts-ignore
   position: Position;
+  image: HTMLImageElement;
 
-  // constructor() {
-  //   this.spawn();
-  // }
+  constructor(imagePath: string) {
+    // this.spawn();
+    this.image = new Image();
+    this.image.src = imagePath;
+  }
 
   spawn(snake: Snake): void {
     let position = getRandomPosition();
@@ -344,8 +398,9 @@ class Food {
   }
 
   draw(ctx: CanvasRenderingContext2D): void {
-    ctx.fillStyle = 'red';
-    ctx.fillRect(this.position.x, this.position.y, CELL_WIDTH, CELL_WIDTH);
+    // ctx.fillStyle = 'red';
+    // ctx.fillRect(this.position.x, this.position.y, CELL_WIDTH, CELL_WIDTH);
+    ctx.drawImage(this.image, this.position.x, this.position.y, CELL_WIDTH, CELL_WIDTH);
   }
 }
 
