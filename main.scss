@@ -1,18 +1,65 @@
-header {
-  display: flex;
-  margin-bottom: 1rem;
-  gap: 1.5rem;
+html,
+body {
+  padding: 0;
+  margin: 0;
 }
 
-label {
-  cursor: pointer;
+main {
+  display: grid;
+  place-items: center;
+  height: 100vh;
 }
 
 .form-control {
   display: flex;
   align-items: center;
+
+  label {
+    cursor: pointer;
+  }
+
   input {
     padding-inline: 0.25rem;
     margin-left: 0.25rem;
+  }
+}
+
+$space: 10px;
+
+.container {
+  border: 5px solid #000;
+  padding: $space;
+}
+
+#root {
+  position: relative;
+  margin: $space 0;
+  background-color: peachpuff;
+}
+
+nav {
+  display: flex;
+  justify-content: space-between;
+}
+
+#sizeInput {
+  width: 33px;
+}
+
+.score {
+  text-align: center;
+}
+
+.press-enter {
+  background-color: black;
+  opacity: 0.5;
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+
+  &-text {
+    font-weight: 700;
+    color: #fff;
   }
 }

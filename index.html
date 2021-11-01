@@ -9,17 +9,25 @@
     <title>Snake2</title>
   </head>
   <body>
-    <header>
-      <div class="form-control">
-        <label for="sizeInput">Board size:</label>
-        <input id="sizeInput" type="number" />
+    <main>
+      <div class="container">
+        <div class="score">Score:&nbsp;<span id="score">0</span></div>
+        <div id="root">
+          <div class="press-enter">
+            <span class="press-enter-text">Press Enter to start</span>
+          </div>
+        </div>
+        <nav>
+          <div class="form-control">
+            <label for="sizeInput">Board size:</label>
+            <input id="sizeInput" type="number" />
+          </div>
+          <div class="form-control">
+            <label for="boardColor">Board color:</label>
+            <input id="boardColor" type="color" />
+          </div>
+        </nav>
       </div>
-      <div class="form-control">
-        <label for="boardColor">Board color:</label>
-        <input id="boardColor" type="color" />
-      </div>
-      <div class="form-control">Score:&nbsp;<span id="score">0</span></div>
-    </header>
-    <div id="root"></div>
+    </main>
   </body>
 </html>

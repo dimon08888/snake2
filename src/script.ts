@@ -1,15 +1,20 @@
-let CELLS_COUNT = 10;
+let CELLS_COUNT = 15;
 let BORDER_WIDTH = 1;
 let CELL_WIDTH = 30;
 let CANVAS_WIDTH = CELLS_COUNT * (CELL_WIDTH + BORDER_WIDTH);
 let TICK = 150;
 let BOARD_COLOR = localStorage.getItem('boardColor') ?? '#000';
 
+// 1. multiple contro modes (wasd and arrows)
+// 2. store board size in local storage.
+// 3. add random image for food spawn (3).
+
 enum Key {
   UP = 'w',
   DOWN = 's',
   LEFT = 'a',
   RIGHT = 'd',
+  START = 'Enter',
 }
 
 enum Direction {
@@ -53,6 +58,42 @@ const setDirection = debounce((snake: Snake, direction: Direction) => {
   snake.direction = direction;
 }, 50);
 
+const pressEnter = document.querySelector('.press-enter') as HTMLElement;
+const pressEnterText = document.querySelector('.press-enter-text') as HTMLElement;
+let intervalId: NodeJS.Timeout;
+
+function startGame(ctx: CanvasRenderingContext2D, snake: Snake, food: Food): void {
+  const scoreElement = document.querySelector('#score') as Element;
+
+  if (intervalId) {
+    clearInterval(intervalId);
+  }
+
+  snake.body.length = 1;
+  scoreElement.textContent = String(0);
+
+  intervalId = setInterval(() => {
+    clearBoard(ctx);
+
+    snake.move();
+    snake.draw(ctx);
+
+    if (snake.collides(food)) {
+      snake.grow();
+      food.spawn(snake);
+      scoreElement.textContent = String(snake.body.length - 1);
+    }
+    //
+    else if (snake.collidesSelf()) {
+      clearInterval(intervalId);
+      pressEnter.style.display = 'grid';
+      pressEnterText.textContent = 'Press Enter to play again';
+    }
+
+    food.draw(ctx);
+  }, TICK);
+}
+
 function main(): void {
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
@@ -67,6 +108,10 @@ function main(): void {
 
   document.addEventListener('keydown', (e) => {
     switch (e.key) {
+      case Key.START:
+        pressEnter.style.display = 'none';
+        startGame(ctx, snake, food);
+        break;
       case Key.UP:
         if (snake.direction !== Direction.DOWN) {
           setDirection(snake, Direction.UP);
@@ -89,38 +134,6 @@ function main(): void {
         break;
     }
   });
-
-  const scoreElement = document.querySelector('#score') as Element;
-  let STOP = false;
-
-  const intervalId = setInterval(() => {
-    if (STOP) return;
-    clearBoard(ctx);
-
-    // console.log('MOVE');
-    snake.move();
-    snake.draw(ctx);
-
-    if (snake.collides(food)) {
-      snake.grow();
-      food.spawn(snake);
-      scoreElement.textContent = String(snake.body.length - 1);
-    }
-    //
-    else if (snake.collidesSelf()) {
-      if (window.confirm('Want to play again?')) {
-        snake.body.length = 1;
-        scoreElement.textContent = String(0);
-      } else {
-        // window.alert('Bye Bye');
-        // console.log('STOP');
-        STOP = true;
-        clearInterval(intervalId);
-      }
-    }
-
-    food.draw(ctx);
-  }, TICK);
 
   const root = document.querySelector('#root');
 
@@ -183,7 +196,7 @@ function drawBoard(canvas: HTMLCanvasElement, root: HTMLDivElement) {
 
   clearBoard(ctx);
 
-  root.style.background = 'peachpuff';
+  // root.style.background = 'peachpuff';
   root.style.maxWidth = CANVAS_WIDTH + 'px';
   root.style.maxHeight = CANVAS_WIDTH + 'px';
 }
