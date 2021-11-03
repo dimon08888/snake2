@@ -1,13 +1,10 @@
-let CELLS_COUNT = 15;
+// gg
+let CELLS_COUNT = parseInt(localStorage.getItem('sizeInput') ?? '15');
 let BORDER_WIDTH = 1;
 let CELL_WIDTH = 30;
 let CANVAS_WIDTH = CELLS_COUNT * (CELL_WIDTH + BORDER_WIDTH);
 let TICK = 150;
 let BOARD_COLOR = localStorage.getItem('boardColor') ?? '#000';
-
-// 1. multiple contro modes (wasd and arrows)
-// 2. store board size in local storage.
-// 3. add random image for food spawn (3).
 
 enum Key {
   UP = 'w',
@@ -15,6 +12,10 @@ enum Key {
   LEFT = 'a',
   RIGHT = 'd',
   START = 'Enter',
+  ARROWUP = 'ArrowUp',
+  ARROWDOWN = 'ArrowDown',
+  ARROWLEFT = 'ArrowLeft',
+  ARROWRIGHT = 'ArrowRight',
 }
 
 enum Direction {
@@ -103,7 +104,7 @@ function main(): void {
   }
 
   const snake = new Snake();
-  const food = new Food('../apple.png');
+  const food = new Food();
   food.spawn(snake);
 
   document.addEventListener('keydown', (e) => {
@@ -113,21 +114,25 @@ function main(): void {
         startGame(ctx, snake, food);
         break;
       case Key.UP:
+      case Key.ARROWUP:
         if (snake.direction !== Direction.DOWN) {
           setDirection(snake, Direction.UP);
         }
         break;
       case Key.DOWN:
+      case Key.ARROWDOWN:
         if (snake.direction !== Direction.UP) {
           setDirection(snake, Direction.DOWN);
         }
         break;
       case Key.LEFT:
+      case Key.ARROWLEFT:
         if (snake.direction !== Direction.RIGHT) {
           setDirection(snake, Direction.LEFT);
         }
         break;
       case Key.RIGHT:
+      case Key.ARROWRIGHT:
         if (snake.direction !== Direction.LEFT) {
           setDirection(snake, Direction.RIGHT);
         }
@@ -163,7 +168,7 @@ function main(): void {
         new Error(`Board size must be in range from ${MIN_COUNT} to ${MAX_COUNT}.`),
       );
     }
-
+    localStorage.setItem('sizeInput', sizeInput.value);
     CELLS_COUNT = newCellsCount;
     CANVAS_WIDTH = CELLS_COUNT * (CELL_WIDTH + BORDER_WIDTH);
 
@@ -389,15 +394,40 @@ function drawCircle(
   ctx.stroke();
 }
 
+function* cycle<T>(arr: readonly T[]): Generator<T, T, unknown> {
+  for (let i = 0; ; i = (i + 1) % arr.length) {
+    yield arr[i];
+  }
+}
+
+function* randomCycle<T>(arr: readonly T[]): Generator<T, T, unknown> {
+  for (;;) {
+    yield arr[Math.floor(Math.random() * arr.length)];
+  }
+}
+
 class Food {
-  // @ts-ignore
   position: Position;
   image: HTMLImageElement;
 
-  constructor(imagePath: string) {
-    // this.spawn();
+  private static readonly imageIterator = randomCycle([
+    '../assets/avocado.png',
+    '../assets/bananas.png',
+    '../assets/cherry.png',
+    '../assets/coconut.png',
+    '../assets/grapes.png',
+    '../assets/lemon.png',
+    '../assets/orange.png',
+    '../assets/peach.png',
+    '../assets/pear.png',
+    '../assets/red_apple.png',
+    '../assets/strawberry.png',
+    '../assets/watermelon.png',
+  ]);
+
+  constructor() {
+    this.position = getRandomPosition();
     this.image = new Image();
-    this.image.src = imagePath;
   }
 
   spawn(snake: Snake): void {
@@ -408,6 +438,7 @@ class Food {
     }
 
     this.position = position;
+    this.image.src = Food.imageIterator.next().value;
   }
 
   draw(ctx: CanvasRenderingContext2D): void {
@@ -430,3 +461,4 @@ try {
     alert(err.stack);
   }
 }
+// G
